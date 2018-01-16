@@ -64,7 +64,7 @@ class CashOperationServiceTest {
         testBackOfficeDatabaseAccessor.addAsset(Asset("Asset5", 8))
         testWalletDatabaseAccessor.insertOrUpdateWallet(buildWallet("Client1", "Asset1", 100.0))
         testWalletDatabaseAccessor.insertOrUpdateWallet(buildWallet("Client2", "Asset1", 100.0))
-        testDatabaseAccessor.insertOrUpdateWallet(buildWallet("Client3", "Asset1", 100.0, reservedBalance = 50.0))
+        testWalletDatabaseAccessor.insertOrUpdateWallet(buildWallet("Client3", "Asset1", 100.0, reservedBalance = 50.0))
         transactionQueue.clear()
         initService()
     }
@@ -94,8 +94,8 @@ class CashOperationServiceTest {
     fun testReservedCashIn() {
         val service = ReservedCashInOutOperationService(assetsHolder, balancesHolder, transactionQueue)
         service.processMessage(buildReservedCashInOutWrapper("Client3", "Asset1", 50.0))
-        val balance = testDatabaseAccessor.getBalance("Client3", "Asset1")
-        val reservedBalance = testDatabaseAccessor.getReservedBalance("Client3", "Asset1")
+        val balance = testWalletDatabaseAccessor.getBalance("Client3", "Asset1")
+        val reservedBalance = testWalletDatabaseAccessor.getReservedBalance("Client3", "Asset1")
         assertEquals(100.0, balance, DELTA)
         assertEquals(100.0, reservedBalance, DELTA)
 
@@ -122,7 +122,7 @@ class CashOperationServiceTest {
     fun testSmallReservedCashIn() {
         val service = ReservedCashInOutOperationService(assetsHolder, balancesHolder, transactionQueue)
         service.processMessage(buildReservedCashInOutWrapper("Client3", "Asset1", 0.01))
-        val reservedBalance = testDatabaseAccessor.getReservedBalance("Client3", "Asset1")
+        val reservedBalance = testWalletDatabaseAccessor.getReservedBalance("Client3", "Asset1")
         assertEquals(50.01, reservedBalance, DELTA)
 
         val operation = transactionQueue.take() as ReservedCashOperation
@@ -148,9 +148,9 @@ class CashOperationServiceTest {
     fun testReservedCashOut() {
         val service = ReservedCashInOutOperationService(assetsHolder, balancesHolder, transactionQueue)
         service.processMessage(buildReservedCashInOutWrapper("Client3", "Asset1", -49.0))
-        val reservedBalance = testDatabaseAccessor.getReservedBalance("Client3", "Asset1")
+        val reservedBalance = testWalletDatabaseAccessor.getReservedBalance("Client3", "Asset1")
         assertEquals(1.0, reservedBalance, DELTA)
-        val balance = testDatabaseAccessor.getBalance("Client3", "Asset1")
+        val balance = testWalletDatabaseAccessor.getBalance("Client3", "Asset1")
         assertEquals(100.0, balance, DELTA)
 
         val operation = transactionQueue.take() as ReservedCashOperation
@@ -180,7 +180,7 @@ class CashOperationServiceTest {
     fun testReservedCashOutNegative() {
         val service = ReservedCashInOutOperationService(assetsHolder, balancesHolder, transactionQueue)
         service.processMessage(buildReservedCashInOutWrapper("Client3", "Asset1", -24.0))
-        var reservedBalance = testDatabaseAccessor.getReservedBalance("Client3", "Asset1")
+        var reservedBalance = testWalletDatabaseAccessor.getReservedBalance("Client3", "Asset1")
         assertEquals(26.0, reservedBalance, DELTA)
 
         val operation = transactionQueue.take() as ReservedCashOperation
@@ -189,7 +189,7 @@ class CashOperationServiceTest {
         assertEquals("Asset1", operation.asset)
 
         service.processMessage(buildReservedCashInOutWrapper("Client3", "Asset1", -30.0))
-        reservedBalance = testDatabaseAccessor.getReservedBalance("Client3", "Asset1")
+        reservedBalance = testWalletDatabaseAccessor.getReservedBalance("Client3", "Asset1")
         assertEquals(26.0, reservedBalance, DELTA)
     }
 
@@ -197,7 +197,7 @@ class CashOperationServiceTest {
     fun testReservedCashInHigherThanBalance() {
         val service = ReservedCashInOutOperationService(assetsHolder, balancesHolder, transactionQueue)
         service.processMessage(buildReservedCashInOutWrapper("Client3", "Asset1", 50.01))
-        val reservedBalance = testDatabaseAccessor.getReservedBalance("Client3", "Asset1")
+        val reservedBalance = testWalletDatabaseAccessor.getReservedBalance("Client3", "Asset1")
         assertEquals(50.0, reservedBalance, DELTA)
     }
 
